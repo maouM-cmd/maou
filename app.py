@@ -258,6 +258,79 @@ st.markdown("""
         margin: 10px 0;
         opacity: 0.8;
     }
+    
+    /* クイック検索ボタン */
+    .quick-search-btn {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        color: white !important;
+        padding: 8px 14px;
+        border-radius: 20px;
+        margin: 4px 2px;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .quick-search-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(1.05);
+    }
+    
+    /* 更新時刻 */
+    .last-updated {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        margin-top: 10px;
+    }
+    
+    /* フッター */
+    .footer {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+        padding: 30px 0 20px 0;
+        margin-top: 40px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .footer a {
+        color: #ffd700 !important;
+        text-decoration: none;
+    }
+    
+    /* シェアボタン */
+    .share-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .share-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        text-decoration: none !important;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+    
+    .share-btn-x {
+        background: #000000;
+        color: white !important;
+    }
+    
+    .share-btn-x:hover {
+        background: #333;
+        transform: scale(1.05);
+    }
 </style>
 
 <div class="shimaenaga-deco shimaenaga-left">🐦</div>
@@ -313,13 +386,17 @@ def render_news_card(entry):
             <h3 class="card-title">{title}</h3>
             <div class="date-badge">🎄 {formatted_date}</div>
             <p class="summary-text">{clean_text}</p>
-            <span class="link-hint">� 記事を読む →</span>
+            <span class="link-hint">🐦 記事を読む →</span>
         </div>
     </a>
     """
     st.markdown(card_html, unsafe_allow_html=True)
 
 def main():
+    # セッションステートでクエリを管理
+    if 'search_query' not in st.session_state:
+        st.session_state.search_query = "Artificial Intelligence"
+    
     # ヘッダー
     st.markdown("""
     <div class="header-container">
@@ -339,10 +416,23 @@ def main():
         
         search_query = st.text_input(
             "キーワードを入力してね 🐦",
-            value="Artificial Intelligence",
+            value=st.session_state.search_query,
             placeholder="検索したいワードを入力...",
             help="Google Newsから検索するキーワードを入力してください"
         )
+        st.session_state.search_query = search_query
+        
+        st.markdown("---")
+        st.markdown("### 🏷️ クイック検索")
+        
+        # クイック検索ボタン
+        quick_keywords = ["ChatGPT", "Claude", "Gemini", "機械学習", "生成AI", "OpenAI"]
+        cols = st.columns(2)
+        for i, keyword in enumerate(quick_keywords):
+            with cols[i % 2]:
+                if st.button(f"🔍 {keyword}", key=f"quick_{keyword}", use_container_width=True):
+                    st.session_state.search_query = keyword
+                    st.rerun()
         
         st.markdown("---")
         st.markdown("### 📊 データソース")
@@ -351,7 +441,7 @@ def main():
         st.markdown("---")
         st.markdown("### 🐦 使い方")
         st.markdown("""
-        1️⃣ 検索ボックスにキーワード入力  
+        1️⃣ キーワード入力 or クイック検索  
         2️⃣ Enterで検索開始！  
         3️⃣ カードをクリックで記事へ  
         """)
@@ -368,6 +458,19 @@ def main():
         
         🐦❄️🐦❄️🐦
         """)
+        
+        st.markdown("---")
+        st.markdown("### 📢 このアプリをシェア")
+        app_url = "https://nvqu6jlxz9yzy38m4cm42j.streamlit.app/"
+        share_text = quote("シマエナガと一緒にAIニュースをチェック！🐦🎄")
+        
+        st.markdown(f"""
+        <div class="share-buttons">
+            <a href="https://twitter.com/intent/tweet?text={share_text}&url={app_url}" target="_blank" class="share-btn share-btn-x">
+                𝕏 シェア
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
     
     # ニュース取得・表示
     if search_query:
@@ -375,10 +478,13 @@ def main():
             news_entries = fetch_news(search_query)
         
         if news_entries:
+            # 更新時刻表示
+            now = datetime.now().strftime("%Y年%m月%d日 %H:%M")
             st.markdown(f"""
             <div class="article-count">
-                � 「{search_query}」のニュースを <strong>{len(news_entries)}</strong> 件見つけたよ！🎄
+                🐦 「{search_query}」のニュースを <strong>{len(news_entries)}</strong> 件見つけたよ！🎄
             </div>
+            <div class="last-updated">🕐 最終更新: {now}</div>
             """, unsafe_allow_html=True)
             
             # 2カラムレイアウト
@@ -387,6 +493,16 @@ def main():
             for i, entry in enumerate(news_entries):
                 with col1 if i % 2 == 0 else col2:
                     render_news_card(entry)
+            
+            # フッター
+            st.markdown("""
+            <div class="footer">
+                <p>🐦 シマエナガAIニュース 🐦</p>
+                <p>Data from <a href="https://news.google.com" target="_blank">Google News</a> | 
+                   Built with <a href="https://streamlit.io" target="_blank">Streamlit</a></p>
+                <p>Made with 🐦 and ❤️</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.warning("🐦 ニュースが見つからなかったよ...別のキーワードで検索してみてね！")
     else:
