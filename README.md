@@ -27,3 +27,7 @@ streamlit run app.py
 ---
 
 Made with 🐦 and ❤️
+
+## 🆕 新しいリポジトリ
+
+`new-repo/` に新規リポジトリとして使える最小構成テンプレートを追加しました。
